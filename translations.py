@@ -24,6 +24,8 @@ WORKOUT_TERMS = {
     "慢跑恢復": "Jog Recovery",
     "完全恢復": "Full Recovery",
     "減量週": "Taper Week",
+    "磨利體感": "sharpen feel",
+    "有氧": "Aerobic",
 }
 
 # Training phase translations

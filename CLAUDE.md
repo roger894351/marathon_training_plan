@@ -8,8 +8,8 @@ Build an **AI-powered dynamic marathon training platform** that generates, monit
 
 ### Long-Term Roadmap
 
-1. **Phase 1 (Current)**: CSV-to-ICS calendar generator with bilingual support
-2. **Phase 2**: Marathon plan generator — create periodized training plans from goal race date/time, current fitness level, and training history
+1. **Phase 1 (Done)**: CSV-to-ICS calendar generator with bilingual support
+2. **Phase 2 (Done)**: Marathon plan generator — Daniels' VDOT-based periodized plans from goal race date/time
 3. **Phase 3**: Running watch data integration — extract metrics from COROS / Apple Watch / Garmin (pace, heart rate, cadence, stride length, power, elevation, GPS routes)
 4. **Phase 4**: Predictive model — use large-scale running datasets to model pace/HR/effort correlations, predict race performance (VDOT, race equivalency, fatigue curves), and compute a composite "readiness score"
 5. **Phase 5**: Dynamic plan adaptation — feed execution data back into the model to adjust upcoming workouts, modify intensity/volume, and re-forecast goal achievability
@@ -26,33 +26,50 @@ Build an **AI-powered dynamic marathon training platform** that generates, monit
 ## Commands
 
 ```bash
-# Generate calendar (bilingual, default)
-python3 generate_calendar.py trainning_plans/台北馬拉松_訓練計畫.csv --name "台北馬拉松"
+# --- Phase 2: Generate training plan ---
+# Sub-3:00 marathon plan (42 weeks, Chinese output)
+python3 plan_generator.py --race-date 2026-12-20 --goal-time 3:00:00 --race-name "台北馬拉松"
 
-# Generate with specific language
-python3 generate_calendar.py <csv_file> --name "Name" --lang zh    # Chinese only
-python3 generate_calendar.py <csv_file> --name "Name" --lang en    # English only
-python3 generate_calendar.py <csv_file> --name "Name" --lang both  # Bilingual
+# 3:30 goal, 30 weeks, English output
+python3 plan_generator.py --race-date 2026-12-20 --goal-time 3:30:00 --weeks 30 --lang en -o plan.csv
 
-# Custom output path
-python3 generate_calendar.py <csv_file> --name "Name" --output my_plan.ics
+# --- Phase 1: Generate calendar from CSV ---
+python3 generate_calendar.py <csv_file> --name "Name" --lang both
+
+# Full pipeline: generate plan → generate calendar
+python3 plan_generator.py --race-date 2026-12-20 --goal-time 3:00:00 --race-name "台北馬拉松" -o plan.csv
+python3 generate_calendar.py plan.csv --name "台北馬拉松" --lang both
 ```
 
 ## Architecture
 
-### Current (Phase 1)
-- **`generate_calendar.py`** — Main CLI script. Reads CSV, generates RFC 5545 ICS with proper line folding and escaping. No external dependencies (stdlib only).
+- **`plan_generator.py`** — Marathon training plan generator using Daniels' VDOT system. Calculates pace zones from goal time, allocates 8 training phases proportionally to available weeks, generates daily workouts from phase-specific templates. Outputs CSV.
+- **`generate_calendar.py`** — CSV-to-ICS calendar converter. Reads plan CSV, generates RFC 5545 ICS with proper line folding and escaping. Compatible with Outlook, Google Calendar, Apple Calendar.
 - **`translations.py`** — Bilingual term dictionaries (workout types, training phases, general terms) and `translate()` function. Terms are sorted longest-first to prevent partial matches.
 - **`trainning_plans/`** — Reference training plan files (CSV and ICS examples).
 
 ### Planned Modules
-- **`plan_generator/`** — Periodized plan creation engine (Daniels' Running Formula, Pfitzinger, Hanson methods)
 - **`watch_sync/`** — Data extraction from COROS API, Apple HealthKit, Garmin Connect
 - **`models/`** — Predictive models for performance, fatigue, race outcome
 - **`scoring/`** — Composite scoring system (training load, readiness, goal progress)
 - **`app/`** — Web/mobile interface for dashboards and plan management
 
-## CSV Input Format
+## VDOT System (plan_generator.py)
+
+Pace zones are calculated from Daniels' Running Formula equations:
+- `VO2 = -4.60 + 0.182258*v + 0.000104*v²` (v in m/min)
+- `%VO2max = 0.8 + 0.1894393*e^(-0.012778*t) + 0.2989558*e^(-0.1932605*t)`
+- `VDOT = VO2 / %VO2max`
+
+Zones: E (59-74%), M (75-84%), T (83-88%), I (95-100%), R (105-110%)
+
+## 8-Phase Periodization
+
+Base 1 (Hills) → Base 2 (Speed) → Development (VO2max) → Threshold 1 (LT) → Threshold 2 (Endurance) → Peak (M-pace Integration) → Summit (Marathon Specific) → Race (Taper)
+
+Weekly pattern: Long Run → Easy → Easy → Hard 1 → Easy → Easy → Hard 2
+
+## CSV Format
 
 ```
 Subject,Start Date,All Day Event,Description
@@ -61,8 +78,9 @@ Subject,Start Date,All Day Event,Description
 
 ## Key Design Decisions
 
-- ICS generated via string formatting (no `icalendar` pip package) to keep zero external dependencies
-- All events are all-day events (`DTSTART;VALUE=DATE`)
-- Line folding at 75 octets per RFC 5545 with UTF-8 awareness
+- Zero external dependencies (Python stdlib only)
+- ICS via string formatting with RFC 5545 line folding at 75 octets
 - Translation uses longest-match-first replacement to avoid partial term collisions
+- Workout templates use `{pace}` placeholders filled with computed VDOT zones — same structure, different paces per goal time
+- Phase allocation adapts proportionally to available weeks (16-52 weeks supported)
 - Bilingual (Traditional Chinese / English) as first-class requirement throughout
