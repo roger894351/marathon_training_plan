@@ -16,7 +16,8 @@ Build an intelligent training system that generates personalized marathon plans,
 |-------|---------|--------|
 | 1 | CSV → ICS calendar generator (bilingual) | Done |
 | 2 | Marathon plan generator (Daniels' VDOT periodized plans) | Done |
-| 3 | Running watch data integration (COROS / Apple Watch / Garmin) | Planned |
+| 3 | Running watch data integration (FIT/TCX/GPX parsing) | Done |
+| 3b | Intervals.icu sync + activity store + dashboard | Done |
 | 4 | Predictive model (pace/HR/effort correlations, race forecasting) | Planned |
 | 5 | Dynamic plan adaptation (auto-adjust based on execution data) | Planned |
 | 6 | Scoring system & app (training load, readiness, goal dashboards) | Planned |
@@ -26,7 +27,8 @@ Build an intelligent training system that generates personalized marathon plans,
 ## Requirements / 需求
 
 - Python 3.9+
-- No external dependencies / 無需安裝額外套件
+- Core modules: no external dependencies / 核心模組無需額外套件
+- Watch sync: `pip install -r requirements.txt` (installs `fitparse` + `requests`)
 
 ---
 
@@ -78,6 +80,88 @@ The generator calculates pace zones from your goal time using Daniels' Running F
 ### 8-Phase Periodization / 八階段週期化
 
 Base 1 (Hills) → Base 2 (Speed) → Development (VO2max) → Threshold 1 → Threshold 2 → Peak (M-pace) → Summit (Marathon Specific) → Race (Taper)
+
+---
+
+## Phase 3: Watch Data Sync / 跑錶數據同步
+
+Parse running watch exports (FIT, TCX, GPX) and extract workout metrics.
+
+解析跑錶匯出檔案（FIT、TCX、GPX）並擷取訓練數據。
+
+```bash
+# Install dependency / 安裝依賴
+pip install -r requirements.txt
+
+# Parse a single FIT file / 解析單一 FIT 檔案
+python3 -m watch_sync activity.fit
+
+# Parse a directory / 解析目錄中的所有檔案
+python3 -m watch_sync exports/ --format fit
+
+# Output as JSON / 輸出 JSON
+python3 -m watch_sync activity.fit -o summary.json
+
+# Detailed per-second CSV / 逐秒詳細 CSV
+python3 -m watch_sync activity.fit -o data.csv --detail
+```
+
+| Flag | Description | 說明 |
+|------|-------------|------|
+| positional | File or directory path | 檔案或目錄路徑 |
+| `--format` | Force format: fit/tcx/gpx (default: auto) | 強制格式 |
+| `-o` / `--output` | Output path (.json or .csv) | 輸出路徑 |
+| `--detail` | Per-second data points in CSV | 逐秒數據 |
+
+### Supported Formats / 支援格式
+
+| Format | Source | Metrics |
+|--------|--------|---------|
+| FIT | COROS, Garmin (native) | All: HR, pace, cadence, power, stride, ground contact |
+| TCX | Garmin Connect export | HR, pace, cadence, altitude, GPS |
+| GPX | Universal GPS format | GPS, elevation, optional HR via extensions |
+
+### Computed Metrics / 計算指標
+
+- **VDOT estimate**: Daniels' formula from workout distance/time
+- **Pace zone distribution**: Time in E/M/T/I/R zones (%)
+- **Per-km splits**: Pace and HR per kilometer
+
+---
+
+## Phase 3b: Intervals.icu Sync + Dashboard / 數據同步與儀表板
+
+Sync activity and wellness data from Intervals.icu, store locally, and visualize with an interactive dashboard.
+
+從 Intervals.icu 同步活動與健康數據，本地儲存，並以互動式儀表板視覺化。
+
+```bash
+# Setup: copy .env.example and add your API key / 設定 API 金鑰
+cp .env.example running_data/.env
+# Edit running_data/.env with your Intervals.icu API key
+
+# Sync last 30 days / 同步最近 30 天
+python3 -m watch_sync sync --days 30
+
+# Regular sync (7 days) + open dashboard / 常規同步 + 開啟儀表板
+python3 -m watch_sync sync --open
+
+# Regenerate dashboard / 重新產生儀表板
+python3 -m watch_sync dashboard --open
+
+# Convenience script / 便利腳本
+./sync.sh
+```
+
+### Dashboard Charts / 儀表板圖表
+
+| Chart | Description | 說明 |
+|-------|-------------|------|
+| Weekly Volume | Bar chart of km/week | 每週跑量長條圖 |
+| Cardiac Efficiency | Pace/HR trend over time | 心臟效率趨勢 |
+| Zone Distribution | Stacked bar of E/M/T/I/R per week | 每週配速區間分布 |
+| Fitness & Fatigue | CTL/ATL training load curves | 體能/疲勞訓練負荷曲線 |
+| Latest Run Card | Summary of most recent activity | 最近活動摘要 |
 
 ---
 

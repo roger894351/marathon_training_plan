@@ -10,10 +10,11 @@ Build an **AI-powered dynamic marathon training platform** that generates, monit
 
 1. **Phase 1 (Done)**: CSV-to-ICS calendar generator with bilingual support
 2. **Phase 2 (Done)**: Marathon plan generator — Daniels' VDOT-based periodized plans from goal race date/time
-3. **Phase 3**: Running watch data integration — extract metrics from COROS / Apple Watch / Garmin (pace, heart rate, cadence, stride length, power, elevation, GPS routes)
-4. **Phase 4**: Predictive model — use large-scale running datasets to model pace/HR/effort correlations, predict race performance (VDOT, race equivalency, fatigue curves), and compute a composite "readiness score"
-5. **Phase 5**: Dynamic plan adaptation — feed execution data back into the model to adjust upcoming workouts, modify intensity/volume, and re-forecast goal achievability
-6. **Phase 6**: Full app with scoring system — quantified training load, recovery score, weather/altitude/location adjustments, short-term & long-term goal tracking dashboards
+3. **Phase 3 (Done)**: Running watch data integration — parse FIT/TCX/GPX exports from COROS / Garmin (pace, heart rate, cadence, stride length, power, elevation, GPS routes)
+4. **Phase 3b (Done)**: Intervals.icu sync + activity store + HTML dashboard — auto-sync via REST API, local JSON store with dedup, Chart.js dashboard (weekly volume, cardiac efficiency, zone distribution, fitness/fatigue, latest run card)
+5. **Phase 4**: Predictive model — use large-scale running datasets to model pace/HR/effort correlations, predict race performance (VDOT, race equivalency, fatigue curves), and compute a composite "readiness score"
+6. **Phase 5**: Dynamic plan adaptation — feed execution data back into the model to adjust upcoming workouts, modify intensity/volume, and re-forecast goal achievability
+7. **Phase 6**: Full app with scoring system — quantified training load, recovery score, weather/altitude/location adjustments, short-term & long-term goal tracking dashboards
 
 ### Key Data Dimensions to Model
 
@@ -26,6 +27,20 @@ Build an **AI-powered dynamic marathon training platform** that generates, monit
 ## Commands
 
 ```bash
+# --- Phase 3b: Intervals.icu sync + dashboard ---
+pip install -r requirements.txt           # install fitparse + requests
+python3 -m watch_sync sync --days 30      # sync last 30 days from Intervals.icu
+python3 -m watch_sync sync                # sync last 7 days (default)
+python3 -m watch_sync sync --open         # sync + open dashboard
+python3 -m watch_sync dashboard --open    # regenerate + open dashboard
+./sync.sh                                 # convenience: sync + dashboard
+
+# --- Phase 3: Parse watch exports ---
+python3 -m watch_sync parse activity.fit        # parse a single FIT file
+python3 -m watch_sync parse exports/ --format fit  # parse a directory
+python3 -m watch_sync activity.fit -o summary.json  # JSON output (backward-compat)
+python3 -m watch_sync activity.fit -o data.csv --detail  # per-second CSV
+
 # --- Phase 2: Generate training plan ---
 # Sub-3:00 marathon plan (42 weeks, Chinese output)
 python3 plan_generator.py --race-date 2026-12-20 --goal-time 3:00:00 --race-name "台北馬拉松"
@@ -48,8 +63,10 @@ python3 generate_calendar.py plan.csv --name "台北馬拉松" --lang both
 - **`translations.py`** — Bilingual term dictionaries (workout types, training phases, general terms) and `translate()` function. Terms are sorted longest-first to prevent partial matches.
 - **`trainning_plans/`** — Reference training plan files (CSV and ICS examples).
 
+### Implemented Modules
+- **`watch_sync/`** — Parse FIT/TCX/GPX activity exports and sync from Intervals.icu. FIT parser uses `fitparse`; TCX/GPX use stdlib. Includes Intervals.icu REST client (`intervals_api.py`), append-only JSON activity store (`activity_store.py`), and Chart.js HTML dashboard generator (`dashboard.py`). API key stored in `running_data/.env` (gitignored).
+
 ### Planned Modules
-- **`watch_sync/`** — Data extraction from COROS API, Apple HealthKit, Garmin Connect
 - **`models/`** — Predictive models for performance, fatigue, race outcome
 - **`scoring/`** — Composite scoring system (training load, readiness, goal progress)
 - **`app/`** — Web/mobile interface for dashboards and plan management
@@ -78,7 +95,7 @@ Subject,Start Date,All Day Event,Description
 
 ## Key Design Decisions
 
-- Zero external dependencies (Python stdlib only)
+- Core modules (Phase 1-2) have zero external dependencies; `watch_sync` requires `fitparse` for FIT files and `requests` for Intervals.icu sync (TCX/GPX use stdlib only)
 - ICS via string formatting with RFC 5545 line folding at 75 octets
 - Translation uses longest-match-first replacement to avoid partial term collisions
 - Workout templates use `{pace}` placeholders filled with computed VDOT zones — same structure, different paces per goal time

@@ -3,3 +3,7 @@ __pycache__/
 .DS_Store
 *.ics
 !trainning_plans/*.ics
+.env
+.env.*
+!.env.example
+running_data/
