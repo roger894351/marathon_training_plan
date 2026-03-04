@@ -101,3 +101,11 @@ Subject,Start Date,All Day Event,Description
 - Workout templates use `{pace}` placeholders filled with computed VDOT zones — same structure, different paces per goal time
 - Phase allocation adapts proportionally to available weeks (16-52 weeks supported)
 - Bilingual (Traditional Chinese / English) as first-class requirement throughout
+
+## Version History
+
+| Date | Phase | Changes |
+|------|-------|---------|
+| 2026-03-03 | Phase 3b | Intervals.icu sync, append-only JSON activity store, Chart.js dashboard (weekly volume, cardiac efficiency, zone distribution, fitness/fatigue, latest run card) |
+| 2026-03-03 | Phase 3b+ | Interactive portal: tabs (Overview/Activities/Analysis), activity detail with per-second stream charts (HR/pace/altitude/cadence), zone bars, splits/intervals tables, sortable/filterable activity table |
+| 2026-03-04 | Phase 3b++ | Cadence x2 fix (COROS single-leg → both feet), yearly run distance card, HR/pace zone boundaries display with legend, zone distribution Day/Week/Month zoom, color-coded activity table (Run/Walk), run type classification (Easy/Tempo/Interval/LSD/Mixed), HR-too-high warning for easy runs, zone settings change tracker (LTHR/MaxHR/threshold pace over time) |

@@ -66,11 +66,11 @@ def get_activity(api_key: str, activity_id: str) -> dict:
 def get_streams(
     api_key: str,
     activity_id: str,
-    types: str = "heartrate,cadence,latlng,altitude,distance,time",
-) -> dict:
+    types: str = "heartrate,cadence,latlng,altitude,distance,time,velocity_smooth,watts",
+) -> list | dict:
     """Get per-second stream data for an activity.
 
-    Returns a dict keyed by stream type, each value is a list of numbers.
+    Returns a list of stream dicts from Intervals.icu.
     """
     url = f"{BASE_URL}/activity/{activity_id}/streams.json"
     params = {"types": types}

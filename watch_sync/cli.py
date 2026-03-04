@@ -415,7 +415,7 @@ def _cmd_sync(args: argparse.Namespace) -> None:
     api_key = load_api_key(env_path)
     store = load_store(store_path)
 
-    sync_activities(api_key, store, days_back=args.days)
+    sync_activities(api_key, store, days_back=args.days, force_update=args.resync)
     sync_wellness(api_key, store, days_back=args.days)
     save_store(store, store_path)
 
@@ -492,6 +492,10 @@ def main(argv: list[str] | None = None) -> None:
     sync_parser.add_argument(
         "--store", default=None,
         help="Path to activity store JSON (default: running_data/activity_log.json)",
+    )
+    sync_parser.add_argument(
+        "--resync", action="store_true",
+        help="Re-download and update all activities in date range",
     )
     sync_parser.add_argument(
         "--open", action="store_true",
