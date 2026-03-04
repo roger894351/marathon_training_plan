@@ -121,8 +121,8 @@ table.act-table tr.sport-other:hover td { background:rgba(171,71,188,0.09); }
     <div class="card">
       <h3>HR Zone Distribution</h3>
       <div class="zoom-controls" id="hrZoomCtrl">
-        <button class="zoom-btn" data-mode="day" onclick="setZoneZoom('hr','day',this)">Day</button>
-        <button class="zoom-btn active" data-mode="week" onclick="setZoneZoom('hr','week',this)">Week</button>
+        <button class="zoom-btn active" data-mode="day" onclick="setZoneZoom('hr','day',this)">Day</button>
+        <button class="zoom-btn" data-mode="week" onclick="setZoneZoom('hr','week',this)">Week</button>
         <button class="zoom-btn" data-mode="month" onclick="setZoneZoom('hr','month',this)">Month</button>
       </div>
       <canvas id="hrZoneDist" height="220"></canvas>
@@ -130,8 +130,8 @@ table.act-table tr.sport-other:hover td { background:rgba(171,71,188,0.09); }
     <div class="card">
       <h3>Pace Zone Distribution</h3>
       <div class="zoom-controls" id="paceZoomCtrl">
-        <button class="zoom-btn" data-mode="day" onclick="setZoneZoom('pace','day',this)">Day</button>
-        <button class="zoom-btn active" data-mode="week" onclick="setZoneZoom('pace','week',this)">Week</button>
+        <button class="zoom-btn active" data-mode="day" onclick="setZoneZoom('pace','day',this)">Day</button>
+        <button class="zoom-btn" data-mode="week" onclick="setZoneZoom('pace','week',this)">Week</button>
         <button class="zoom-btn" data-mode="month" onclick="setZoneZoom('pace','month',this)">Month</button>
       </div>
       <canvas id="paceZoneDist" height="220"></canvas>
@@ -288,6 +288,9 @@ function showTab(name) {
 }
 
 // ======================== OVERVIEW TAB ========================
+// Track zone chart instances for destroy/rebuild (must be before buildOverview)
+const _zoneCharts = {};
+
 (function buildOverview() {
   if(!activities.length) return;
 
@@ -358,13 +361,10 @@ function showTab(name) {
     });
   }
 
-  // Zone distributions with zoom
-  buildZoneDist('hrZoneDist', 'icu_hr_zone_times', 'week');
-  buildZoneDist('paceZoneDist', 'pace_zone_times', 'week');
+  // Zone distributions — default to 'day' for better visibility with small datasets
+  buildZoneDist('hrZoneDist', 'icu_hr_zone_times', 'day');
+  buildZoneDist('paceZoneDist', 'pace_zone_times', 'day');
 })();
-
-// Track zone chart instances for destroy/rebuild
-const _zoneCharts = {};
 
 function setZoneZoom(type, mode, btn) {
   const ctrl = btn.parentElement;
