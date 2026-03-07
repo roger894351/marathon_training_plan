@@ -129,11 +129,11 @@ python3 -m watch_sync activity.fit -o data.csv --detail
 
 ---
 
-## Phase 3b: Intervals.icu Sync + Dashboard / 數據同步與儀表板
+## Phase 3b: Intervals.icu Sync + Interactive Portal / 數據同步與互動式訓練入口
 
-Sync activity and wellness data from Intervals.icu, store locally, and visualize with an interactive dashboard.
+Sync activity and wellness data from Intervals.icu, store locally as JSON, and visualize with a self-contained interactive HTML portal (Chart.js).
 
-從 Intervals.icu 同步活動與健康數據，本地儲存，並以互動式儀表板視覺化。
+從 Intervals.icu 同步活動與健康數據，本地儲存為 JSON，並以獨立互動式 HTML 入口（Chart.js）視覺化。
 
 ```bash
 # Setup: copy .env.example and add your API key / 設定 API 金鑰
@@ -142,6 +142,9 @@ cp .env.example running_data/.env
 
 # Sync last 30 days / 同步最近 30 天
 python3 -m watch_sync sync --days 30
+
+# Re-sync to update zone/cadence data / 重新同步更新區間數據
+python3 -m watch_sync sync --days 30 --resync
 
 # Regular sync (7 days) + open dashboard / 常規同步 + 開啟儀表板
 python3 -m watch_sync sync --open
@@ -153,15 +156,33 @@ python3 -m watch_sync dashboard --open
 ./sync.sh
 ```
 
-### Dashboard Charts / 儀表板圖表
+### Portal Tabs / 入口分頁
 
-| Chart | Description | 說明 |
-|-------|-------------|------|
-| Weekly Volume | Bar chart of km/week | 每週跑量長條圖 |
-| Cardiac Efficiency | Pace/HR trend over time | 心臟效率趨勢 |
-| Zone Distribution | Stacked bar of E/M/T/I/R per week | 每週配速區間分布 |
-| Fitness & Fatigue | CTL/ATL training load curves | 體能/疲勞訓練負荷曲線 |
-| Latest Run Card | Summary of most recent activity | 最近活動摘要 |
+**Overview / 總覽**
+| Feature | Description | 說明 |
+|---------|-------------|------|
+| Summary Cards | Week / Month / Year run distance, CTL, ATL, TSB, Resting HR | 週/月/年跑量、體能、疲勞、狀態、靜心率 |
+| Weekly Volume + Intensity | Dual-axis bar+line chart (km + training load) | 雙軸圖（跑量 + 訓練負荷）|
+| Fitness / Fatigue / Form | CTL / ATL / TSB training load curves | 體能/疲勞/狀態曲線 |
+| Zone Distribution | HR & pace zone stacked bars with Day/Week/Month zoom | 心率與配速區間分布（日/週/月切換）|
+
+**Activities / 活動列表**
+| Feature | Description | 說明 |
+|---------|-------------|------|
+| Color-coded table | Run (default), Walk (blue tint), Other (purple tint) | 依運動類型著色 |
+| Run classification | Auto-classify: Easy / Tempo / Interval / LSD / Mixed | 自動分類跑步類型 |
+| HR warning | Flags easy runs with HR above Z3 threshold | 輕鬆跑心率過高警告 |
+| Activity detail | Click-to-expand: stream charts (HR, pace, altitude, cadence), zone bars with boundary legend, splits, intervals | 點擊展開：串流圖表、區間條、分段、間歇 |
+| Filters | Sport type, run type, text search, sortable columns | 運動/類型篩選、搜尋、排序 |
+
+**Analysis / 分析**
+| Feature | Description | 說明 |
+|---------|-------------|------|
+| Temperature scatter | Temp vs efficiency, temp vs HR | 溫度 vs 效率/心率 |
+| Pace & VDOT trends | Pace and estimated VDOT over time | 配速與 VDOT 趨勢 |
+| Resting HR trend | Wellness resting HR progression | 靜心率趨勢 |
+| Training load | Per-activity load bar chart (color by intensity) | 訓練負荷長條圖 |
+| Zone settings tracker | LTHR, max HR, threshold pace changes over time | 區間設定變化追蹤 |
 
 ---
 
